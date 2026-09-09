@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Comparative OS Architecture Simulator: iOS vs Android</title>
+    <style>
+        :root {
+            --bg: #0a0e17;
+            --card-bg: #131a29;
+            --border: #232f48;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --ios-color: #38bdf8;
+            --android-color: #4ade80;
+            --accent-purple: #c084fc;
+            --accent-amber: #fbbf24;
+            --accent-red: #f87171;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+            max-width: 900px;
+        }
+
+        header h1 {
+            font-size: 26px;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        header h1 span.ios {
+            color: var(--ios-color);
+        }
+
+        header h1 span.android {
+            color: var(--android-color);
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Global Action Controls */
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 24px;
+            background: var(--card-bg);
+            padding: 12px 18px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        .btn {
+            background: #1e293b;
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s ease;
+        }
+
+        .btn:hover {
+            background: #27364f;
+            border-color: var(--text-muted);
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Side-by-Side Grid */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 850px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .os-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .os-panel.ios {
+            border-top: 4px solid var(--ios-color);
+        }
+
+        .os-panel.android {
+            border-top: 4px solid var(--android-color);
+        }
+
+        .os-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .os-title {
+            font-size: 17px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .os-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #1e293b;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        /* Architecture Layers */
+        .layer-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .layer-node {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .layer-node.active-ios {
+            border-color: var(--ios-color);
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+            background: #132742;
+        }
+
+        .layer-node.active-android {
+            border-color: var(--android-color);
+            box-shadow: 0 0 14px rgba(74, 222, 128, 0.35);
+            background: #123326;
+        }
+
+        .layer-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .layer-desc {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* Live Output Terminal */
+        .terminal-container {
+            max-width: 1200px;
+            width: 100%;
+            background: #050811;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 24px;
+            font-family: "SF Mono", Menlo, Consolas, Monaco, monospace;
+            font-size: 12px;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
+        }
+
+        .terminal-title {
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .terminal-feed {
+            height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .log-line {
+            line-height: 1.4;
+        }
+
+        .log-time {
+            color: #64748b;
+            margin-right: 6px;
+        }
+
+        .log-ios {
+            color: var(--ios-color);
+        }
+
+        .log-android {
+            color: var(--android-color);
+        }
+
+        .log-warn {
+            color: var(--accent-amber);
+        }
+
+        .log-err {
+            color: var(--accent-red);
+        }
+
+        /* Concept Breakdown Table */
+        .breakdown-table-panel {
+            max-width: 1200px;
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .breakdown-table-panel h2 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: var(--text);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th,
+        td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            background: #0f172a;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Comparative OS Working Model: <span class="ios">iOS</span> vs <span class="android">Android</span></h1>
+        <p>Simulating architectural layers, touch thread preemption, IPC communication, and hardware abstractions side
+            by side.</p>
+    </header>
+
+    <!-- Interactive Triggers -->
+    <div class="action-bar">
+        <button class="btn" onclick="triggerTouch()">
+            <span>👆 User Screen Tap</span>
+        </button>
+        <button class="btn" onclick="triggerBackgroundSync()">
+            <span>⏳ Low-Priority Background Task</span>
+        </button>
+        <button class="btn" onclick="triggerSandboxTest(true)">
+            <span>📂 Read App Sandbox Container</span>
+        </button>
+        <button class="btn" onclick="triggerSandboxTest(false)">
+            <span>🔒 Read Protected System DB (SMS)</span>
+        </button>
+    </div>
+
+    <!-- Side-by-Side OS Architecture Stacks -->
+    <div class="comparison-grid">
+
+        <!-- iOS Stack -->
+        <div class="os-panel ios">
+            <div class="os-header">
+                <div class="os-title" style="color: var(--ios-color);">
+                     iOS Architecture
+                </div>
+                <span class="os-badge">Darwin / XNU Hybrid</span>
+            </div>
+
+            <div class="layer-stack">
+                <div class="layer-node" id="ios-layer-1">
+                    <div class="layer-meta">
+                        <span style="color: var(--ios-color);">1. Cocoa Touch Layer</span>
+                        <span style="color: #94a3b8; font-size: 11px;">UIKit / SwiftUI</span>
+                    </div>
+                    <div class="layer-desc">Captures multi-touch events; assigns highest priority (Priority 0) to Main
+                        UI RunLoop.</div>
+                </div>
+
+                <div class="layer-node" id="ios-layer-2">
+                    <div class="layer-meta">
+                        <span style="color: var(--accent-purple);">2. Media Layer</span>
+                        <span style="color: #94a3b8; font-size: 11px;">Metal / Core Animation</span>
+                    </div>
+                    <div class="layer-desc">Direct low-overhead GPU shaders; schedules frame draw calls synced with
+                        display refresh.</div>
+                </div>
+
+                <div class="layer-node" id="ios-layer-3">
+                    <div class="layer-meta">
+                        <span style="color: #38bdf8;">3. Core Services</span>
+                        <span style="color: #94a3b8; font-size: 11px;">GCD & Mach Ports</span>
+                    </div>
+                    <div class="layer-desc">Grand Central Dispatch QoS management; routes asynchronous events via
+                        lightweight Mach IPC ports.</div>
+                </div>
+
+                <div class="layer-node" id="ios-layer-4">
+                    <div class="layer-meta">
+                        <span style="color: var(--accent-amber);">4. Core OS</span>
+                        <span style="color: #94a3b8; font-size: 11px;">Security & Hardware</span>
+                    </div>
+                    <div class="layer-desc">Access-control list evaluation, Secure Enclave verification, libSystem POSIX
+                        threading.</div>
+                </div>
+
+                <div class="layer-node" id="ios-layer-5">
+                    <div class="layer-meta">
+                        <span style="color: #f472b6;">5. XNU Kernel</span>
+                        <span style="color: #94a3b8; font-size: 11px;">Mach + FreeBSD</span>
+                    </div>
+                    <div class="layer-desc">Hybrid core: Mach microkernel schedules threads; FreeBSD provides POSIX APIs
+                        and strict container sandboxes.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Android Stack -->
+        <div class="os-panel android">
+            <div class="os-header">
+                <div class="os-title" style="color: var(--android-color);">
+                    🤖 Android Architecture
+                </div>
+                <span class="os-badge">Modified Linux Monolithic</span>
+            </div>
+
+            <div class="layer-stack">
+                <div class="layer-node" id="android-layer-1">
+                    <div class="layer-meta">
+                        <span style="color: var(--android-color);">1. App & Framework Layer</span>
+                        <span style="color: #94a3b8; font-size: 11px;">Kotlin / Java API</span>
+                    </div>
+                    <div class="layer-desc">ActivityManager & WindowManager manage components; Choreographer coordinates
+                        screen frames.</div>
+                </div>
+
+                <div class="layer-node" id="android-layer-2">
+                    <div class="layer-meta">
+                        <span style="color: #34d399;">2. Android Runtime (ART)</span>
+                        <span style="color: #94a3b8; font-size: 11px;">DEX / AOT + JIT</span>
+                    </div>
+                    <div class="layer-desc">Translates DEX bytecode to ARM machine instructions; executes runtime
+                        Garbage Collection (GC).</div>
+                </div>
+
+                <div class="layer-node" id="android-layer-3">
+                    <div class="layer-meta">
+                        <span style="color: #6ee7b7;">3. Native Libraries</span>
+                        <span style="color: #94a3b8; font-size: 11px;">Bionic, Skia, Vulkan</span>
+                    </div>
+                    <div class="layer-desc">Compiled C/C++ core engines; SurfaceFlinger handles screen composition;
+                        SQLite handles local data.</div>
+                </div>
+
+                <div class="layer-node" id="android-layer-4">
+                    <div class="layer-meta">
+                        <span style="color: var(--accent-amber);">4. Hardware Abstraction (HAL)</span>
+                        <span style="color: #94a3b8; font-size: 11px;">Camera / Sensor HAL</span>
+                    </div>
+                    <div class="layer-desc">Standardizes device interfaces, allowing vendor hardware modules to
+                        interface with framework code.</div>
+                </div>
+
+                <div class="layer-node" id="android-layer-5">
+                    <div class="layer-meta">
+                        <span style="color: #a3e635;">5. Linux Kernel</span>
+                        <span style="color: #94a3b8; font-size: 11px;">Monolithic + Binder</span>
+                    </div>
+                    <div class="layer-desc">Custom enhancements: Binder IPC for inter-process communication; Low Memory
+                        Killer (LMK); CFS scheduling.</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Live Terminal Console -->
+    <div class="terminal-container">
+        <div class="terminal-title">System Execution Log (Real-Time Subsystem Trace)</div>
+        <div class="terminal-feed" id="terminalFeed">
+            <div class="log-line">
+                <span class="log-time">[BOOT]</span>
+                <span>Simulators ready. Both operating system environments initialized and idle.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Under The Hood -->
+    <div class="breakdown-table-panel">
+        <h2>Architectural Breakdown: How Each OS Operates Under the Hood</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>OS Dimension</th>
+                    <th>iOS (Apple Darwin)</th>
+                    <th>Android (Google AOSP)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Kernel Type</strong></td>
+                    <td><strong>Hybrid:</strong> Mach (microkernel IPC & thread scheduling) + FreeBSD (POSIX filesystem,
+                        networking, sandboxing).</td>
+                    <td><strong>Monolithic:</strong> Modified Linux kernel with Binder driver, Ashmem, and Low Memory
+                        Killer (LMK).</td>
+                </tr>
+                <tr>
+                    <td><strong>UI Thread Priority</strong></td>
+                    <td><strong>Preemptive High:</strong> The UI rendering thread instantly preempts background tasks,
+                        prioritizing frame consistency.</td>
+                    <td><strong>Cooperative VSYNC:</strong> UI rendering runs on Choreographer loops synced with VSYNC
+                        pulses; subject to ART GC pause times.</td>
+                </tr>
+                <tr>
+                    <td><strong>Inter-Process Comm (IPC)</strong></td>
+                    <td><strong>Mach Message Passing:</strong> Ports shuttle lightweight message buffers; XPC services
+                        broker secure app communication.</td>
+                    <td><strong>Binder IPC:</strong> Uses memory-mapped transactions (<code>/dev/binder</code>) to share
+                        payloads across app/service boundaries.</td>
+                </tr>
+                <tr>
+                    <td><strong>App Isolation & Sandbox</strong></td>
+                    <td><strong>Container Boundary:</strong> Every app runs under strict FreeBSD-level path rules;
+                        access to photos/contacts requires explicit TCC tokens.</td>
+                    <td><strong>Linux UID Isolation:</strong> Each app runs under a dedicated Linux User ID (UID); file
+                        permissions are managed by Linux DAC/SELinux.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const feed = document.getElementById("terminalFeed");
+
+        function log(type, text) {
+            const now = new Date();
+            const time = now.toTimeString().split(" ")[0] + "." + String(now.getMilliseconds()).padStart(3, '0');
+            const row = document.createElement("div");
+            row.className = "log-line";
+
+            let colorClass = "log-ios";
+            if (type === "android") colorClass = "log-android";
+            if (type === "warn") colorClass = "log-warn";
+            if (type === "err") colorClass = "log-err";
+
+            row.innerHTML = `<span class="log-time">[${time}]</span><span class="${colorClass}">${text}</span>`;
+            feed.appendChild(row);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        function flashLayer(id, activeClass, ms) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.add(activeClass);
+            setTimeout(() => el.classList.remove(activeClass), ms);
+        }
+
+        // 1. Touch Gesture Simulation
+        function triggerTouch() {
+            // iOS flow: Cocoa Touch -> Core Services -> Media (Metal)
+            flashLayer("ios-layer-1", "active-ios", 300);
+            log("ios", "[iOS Cocoa Touch] UITouch down at (184, 420) -> Preempting Main RunLoop (Priority 0)");
+
+            setTimeout(() => {
+                flashLayer("ios-layer-3", "active-ios", 300);
+                log("ios", "  [iOS Mach Port] Shuttled touch event packet to MapKit message queue.");
+            }, 70);
+
+            setTimeout(() => {
+                flashLayer("ios-layer-2", "active-ios", 350);
+                log("ios", "  [iOS Metal] Committed MTLCommandBuffer to GPU for 120Hz ProMotion render.");
+            }, 140);
+
+            // Android flow: App Framework -> Native Libraries -> Kernel Driver
+            flashLayer("android-layer-1", "active-android", 300);
+            log("android", "[Android Framework] WindowManager received MotionEvent -> Dispatched to Choreographer");
+
+            setTimeout(() => {
+                flashLayer("android-layer-3", "active-android", 300);
+                log("android", "  [Android Native] SurfaceFlinger queued drawing layer buffer synced to next VSYNC.");
+            }, 90);
+
+            setTimeout(() => {
+                flashLayer("android-layer-5", "active-android", 350);
+                log("android", "  [Android Kernel] Linux evdev input driver acknowledged hardware digitizer frame.");
+            }, 160);
+        }
+
+        // 2. Background Sync Simulation
+        function triggerBackgroundSync() {
+            // iOS: Grand Central Dispatch background queue
+            flashLayer("ios-layer-3", "active-ios", 400);
+            log("ios", "[iOS GCD] Dispatched background maintenance thread with QoS: Background (Throttled if UI taps occur).");
+
+            // Android: WorkManager / Binder / LMK
+            flashLayer("android-layer-1", "active-android", 300);
+            setTimeout(() => {
+                flashLayer("android-layer-5", "active-android", 400);
+                log("android", "[Android WorkManager] Dispatched task via Binder IPC to JobScheduler service (Monitored by Low Memory Killer).");
+            }, 80);
+        }
+
+        // 3. Sandbox Security Test
+        function triggerSandboxTest(isSafe) {
+            flashLayer("ios-layer-4", "active-ios", 300);
+            flashLayer("ios-layer-5", "active-ios", 300);
+            flashLayer("android-layer-1", "active-android", 300);
+            flashLayer("android-layer-5", "active-android", 300);
+
+            if (isSafe) {
+                log("ios", "[iOS XNU Sandbox] Access GRANTED -> /var/mobile/Containers/Data/Application/Maps/cache.db (Within Container).");
+                log("android", "[Android Linux DAC] Access GRANTED -> /data/data/com.example.maps/cache.db (Owned by Process UID 10182).");
+            } else {
+                log("err", "⛔ [iOS XNU Kernel] SandboxViolation: com.example.app denied access to /var/mobile/Library/SMS/sms.db");
+                log("err", "⛔ [Android SELinux] avc: denied { read } for scontext=u:r:untrusted_app:s0 tcontext=u:object_r:telephony_data_file:s0");
+            }
+        }
+    </script>
+</body>
+
+</html>
